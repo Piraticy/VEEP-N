@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="VEEP-N">
+  <rect width="128" height="128" rx="26" fill="#08111f"/>
+  <path d="M64 22 94 34v26c0 22-12 37-30 46-18-9-30-24-30-46V34l30-12Z" fill="#10241f" stroke="#74e4ae" stroke-width="8" stroke-linejoin="round"/>
+  <path d="m50 63 10 10 22-25" fill="none" stroke="#7cc7ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="64" r="54" fill="none" stroke="#74e4ae" stroke-opacity=".16" stroke-width="8"/>
+</svg>

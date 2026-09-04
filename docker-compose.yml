@@ -1,0 +1,16 @@
+services:
+  veep-n:
+    build:
+      context: .
+    container_name: veep-n-vpn
+    ports:
+      - "8095:8080"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      VEEP_N_RELAY_CSV_URLS: "https://www.vpngate.net/api/iphone/,http://150.40.105.10:46711/api/iphone/,http://150.40.105.24:38827/api/iphone/,http://160.251.62.107:46080/api/iphone/,http://62.133.35.246:2265/api/iphone/,http://150.40.105.17:50406/api/iphone/,http://150.40.105.12:29202/api/iphone/"
+    restart: unless-stopped

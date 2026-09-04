@@ -1,0 +1,31 @@
+{
+  "name": "veep-n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VEEP-N web and desktop VPN bridge interface.",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "start": "node server.cjs",
+    "desktop": "concurrently -k \"npm:dev\" \"wait-on http://127.0.0.1:5173 && cross-env VEEP_N_DEV_URL=http://127.0.0.1:5173 electron .\"",
+    "desktop:prod": "npm run build && electron ."
+  },
+  "dependencies": {
+    "lucide-react": "^0.542.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^5.0.2",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.0.0",
+    "electron": "^44.2.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.4",
+    "wait-on": "^8.0.4"
+  }
+}
