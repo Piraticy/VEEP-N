@@ -590,6 +590,10 @@ function getStatusLabel(status: ConnectionStatus) {
     return "Profile ready";
   }
 
+  if (status === "handoff") {
+    return "Open desktop";
+  }
+
   return "Idle";
 }
 
@@ -745,6 +749,18 @@ function App() {
   }, [loadSharedState]);
 
   React.useEffect(() => {
+    if (!window.veepnDesktop && status !== "connecting" && status !== "connected") {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadRuntimeStatus();
+    }, 2200);
+
+    return () => window.clearInterval(interval);
+  }, [loadRuntimeStatus, status]);
+
+  React.useEffect(() => {
     if (!window.veepnDesktop && sharedState) {
       setStatus(sharedState.status);
     }
@@ -758,35 +774,40 @@ function App() {
 
   const canNativeConnect = Boolean(isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
   const canRuntimeConnect = Boolean(!isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
+  const canSystemConnect = Boolean(!isDesktop && !canRuntimeConnect && selectedRelay);
   const relayCountries = new Set(relays.map((relay) => relay.countryShort)).size;
-  const activeCountryName = selectedRelay?.countryLong ?? selected.name;
-  const activeCountryCode = selectedRelay?.countryShort ?? selected.code;
+  const runtimeConnection = runtimeStatus?.activeConnection;
+  const sharedConnection = sharedState && sharedState.status !== "idle" ? sharedState : null;
+  const activeCountryName = selectedRelay?.countryLong ?? runtimeConnection?.countryName ?? sharedConnection?.countryName ?? selected.name;
+  const activeCountryCode = selectedRelay?.countryShort ?? runtimeConnection?.countryCode ?? sharedConnection?.countryCode ?? selected.code;
   const activeLatency = selectedRelay?.ping ?? selected.latency;
   const activeLoad = selectedRelay ? selectedRelay.sessions : selected.load;
+  const activeRelayHost = selectedRelay?.hostname ?? runtimeConnection?.relayHost ?? sharedConnection?.relayHost ?? "";
+  const activeRelayIp = selectedRelay?.ip ?? runtimeConnection?.relayIp ?? sharedConnection?.relayIp ?? "";
   const statusLabel = getStatusLabel(status);
   const activeSession =
-    sharedState && sharedState.status !== "idle"
-      ? sharedState
+    sharedConnection
+      ? sharedConnection
       : {
           status,
           countryCode: activeCountryCode,
           countryName: activeCountryName,
           protocol: selectedRelay ? "OpenVPN" : protocol,
-          relayHost: selectedRelay?.hostname ?? "",
-          relayIp: selectedRelay?.ip ?? "",
+          relayHost: activeRelayHost,
+          relayIp: activeRelayIp,
           deviceName,
           deviceType,
-          mode: canNativeConnect ? "native" : canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo",
-          connectedAt: status === "connected" ? new Date().toISOString() : null,
+          mode: canNativeConnect || runtimeConnection ? "native" : canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo",
+          connectedAt: runtimeConnection?.connectedAt ?? (status === "connected" ? new Date().toISOString() : null),
           updatedAt: new Date().toISOString(),
           message: ""
         };
   const readiness = selectedRelay
     ? canNativeConnect
-      ? "Ready for desktop tunnel"
+      ? "Desktop tunnel ready"
       : canRuntimeConnect
-        ? "Ready to connect"
-        : "Ready to export OpenVPN profile"
+        ? "App tunnel ready"
+        : "Open desktop app"
     : "Bridge demo";
   const primaryActionLabel =
     status === "connecting"
@@ -796,8 +817,54 @@ function App() {
         : selectedRelay
           ? canNativeConnect || canRuntimeConnect
             ? "Connect VPN"
-            : "Export profile"
+            : "Connect system"
           : "Demo connect";
+
+  React.useEffect(() => {
+    if (!runtimeStatus) {
+      return;
+    }
+
+    if (runtimeStatus.vpnRunning) {
+      setStatus("connected");
+
+      if (!window.veepnDesktop && sharedState?.status !== "connected") {
+        void publishSharedState({
+          status: "connected",
+          mode: "container",
+          connectedAt: new Date().toISOString(),
+          message: `${activeCountryName} tunnel is running.`
+        });
+      }
+      return;
+    }
+
+    if (runtimeStatus.openVpnInstalled && (status === "connected" || status === "connecting")) {
+      setStatus("idle");
+
+      if (!window.veepnDesktop && sharedState?.status !== "idle") {
+        void publishSharedState({
+          status: "idle",
+          message: "VPN runtime is idle."
+        });
+      }
+    }
+  }, [activeCountryName, publishSharedState, runtimeStatus, sharedState?.status, status]);
+
+  function getSystemConnectUrl() {
+    if (!selectedRelay) {
+      return "";
+    }
+
+    const params = new URLSearchParams({
+      countryCode: activeCountryCode,
+      countryName: activeCountryName,
+      relayHost: selectedRelay.hostname,
+      relayIp: selectedRelay.ip
+    });
+
+    return `veepn://connect?${params.toString()}`;
+  }
 
   async function connect() {
     setStatus("connecting");
@@ -805,7 +872,7 @@ function App() {
     await publishSharedState({
       status: "connecting",
       message: selectedRelay ? `Preparing ${selectedRelay.hostname}` : `Preparing ${activeCountryName}`,
-      mode: canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo"
+      mode: canNativeConnect || canSystemConnect ? "native" : canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo"
     });
 
     if (window.veepnDesktop) {
@@ -873,6 +940,16 @@ function App() {
           message: error instanceof Error ? error.message : "VPN connection failed."
         });
       }
+      return;
+    } else if (selectedRelay && canSystemConnect) {
+      window.location.href = getSystemConnectUrl();
+      setStatus("handoff");
+      setConnectionMessage("Opening VEEP-N desktop to start the system VPN.");
+      await publishSharedState({
+        status: "handoff",
+        mode: "native",
+        message: `Opening desktop connector for ${selectedRelay.hostname}.`
+      });
       return;
     } else if (selectedRelay) {
       await exportRelayConfig();
@@ -1019,6 +1096,8 @@ function App() {
               <ShieldCheck size={22} />
             ) : status === "profile-ready" ? (
               <Download size={22} />
+            ) : status === "handoff" ? (
+              <PlugZap size={22} />
             ) : status === "connecting" || status === "disconnecting" ? (
               <LoaderCircle className="spin" size={22} />
             ) : (
@@ -1037,7 +1116,7 @@ function App() {
         </section>
 
         <section id="connect" className="connection-grid single">
-          <div className="connection-panel">
+          <div className={`connection-panel ${status}`}>
             <div className="panel-heading">
               <div>
                 <span className="eyebrow">Route</span>
@@ -1059,6 +1138,18 @@ function App() {
               </div>
               <div className="node exit">
                 <MapPin size={18} />
+              </div>
+              <div className="vpn-visual-status">
+                {status === "connected" ? (
+                  <ShieldCheck size={18} />
+                ) : status === "connecting" || status === "disconnecting" ? (
+                  <LoaderCircle className="spin" size={18} />
+                ) : status === "handoff" ? (
+                  <PlugZap size={18} />
+                ) : (
+                  <Power size={18} />
+                )}
+                <strong>{statusLabel}</strong>
               </div>
               <div className="map-grid" />
             </div>
@@ -1082,9 +1173,13 @@ function App() {
             </div>
 
             <div className="connect-actions">
-              {status === "connected" || status === "profile-ready" || status === "connecting" || status === "disconnecting" ? (
+              {status === "connected" ||
+              status === "profile-ready" ||
+              status === "handoff" ||
+              status === "connecting" ||
+              status === "disconnecting" ? (
                 <button className="danger-button" onClick={disconnect} disabled={status === "disconnecting"}>
-                  <X size={18} /> {status === "profile-ready" ? "Clear" : "Disconnect"}
+                  <X size={18} /> {status === "profile-ready" || status === "handoff" ? "Clear" : "Disconnect"}
                 </button>
               ) : (
                 <button

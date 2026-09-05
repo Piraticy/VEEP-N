@@ -68,9 +68,17 @@ type RuntimeStatus = {
   relaySource: RelaySourceStatus;
   vpnRunning: boolean;
   vpnLog: string[];
+  activeConnection?: {
+    countryCode: string;
+    countryName: string;
+    protocol: string;
+    relayHost: string;
+    relayIp: string;
+    connectedAt: string;
+  } | null;
 };
 
-type SharedConnectionStatus = "idle" | "connecting" | "connected" | "profile-ready" | "disconnecting";
+type SharedConnectionStatus = "idle" | "connecting" | "connected" | "profile-ready" | "handoff" | "disconnecting";
 
 type SharedConnectionState = {
   status: SharedConnectionStatus;

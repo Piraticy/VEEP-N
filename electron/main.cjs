@@ -11,6 +11,9 @@ const {
 const isDev = Boolean(process.env.VEEP_N_DEV_URL);
 let vpnProcess = null;
 let vpnLog = [];
+let mainWindow = null;
+let pendingDeepLink = null;
+let activeNativeConnection = null;
 
 function runCommand(command, args) {
   return new Promise((resolve) => {
@@ -49,7 +52,8 @@ async function getRuntimeStatus() {
     openVpnPath,
     relaySource: getRelaySourceStatus(),
     vpnRunning: Boolean(vpnProcess && !vpnProcess.killed),
-    vpnLog: vpnLog.slice(-12)
+    vpnLog: vpnLog.slice(-12),
+    activeConnection: activeNativeConnection
   };
 }
 
@@ -59,13 +63,129 @@ function appendVpnLog(line) {
 
 async function writeRelayProfile(hostname) {
   const relayConfig = await getVpnGateConfig(hostname);
+  const authPath = path.join(app.getPath("userData"), "vpngate-auth.txt");
   const targetPath = path.join(app.getPath("downloads"), relayConfig.filename);
-  await fs.writeFile(targetPath, relayConfig.config, "utf8");
+  const quotedAuthPath = `"${authPath.replaceAll('"', '\\"')}"`;
+  const config = /^auth-user-pass\s*$/m.test(relayConfig.config)
+    ? relayConfig.config.replace(/^auth-user-pass\s*$/m, `auth-user-pass ${quotedAuthPath}`)
+    : `${relayConfig.config.trim()}\nauth-user-pass ${quotedAuthPath}\n`;
+
+  await fs.writeFile(authPath, "vpn\nvpn\n", { encoding: "utf8", mode: 0o600 });
+  await fs.writeFile(targetPath, config, "utf8");
   return { ...relayConfig, targetPath };
 }
 
+function parseDeepLink(url) {
+  try {
+    const parsedUrl = new URL(url);
+
+    if (parsedUrl.protocol !== "veepn:" || parsedUrl.hostname !== "connect") {
+      return null;
+    }
+
+    return {
+      countryCode: parsedUrl.searchParams.get("countryCode") ?? "",
+      countryName: parsedUrl.searchParams.get("countryName") ?? "",
+      protocol: "OpenVPN",
+      relayHost: parsedUrl.searchParams.get("relayHost") ?? "",
+      relayIp: parsedUrl.searchParams.get("relayIp") ?? "",
+      nativeConnect: true
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function connectRelayNative(request) {
+  if (!request.relayHost) {
+    return {
+      ok: false,
+      mode: "profile-ready",
+      openError: "No relay host was provided."
+    };
+  }
+
+  const relayConfig = await writeRelayProfile(request.relayHost);
+  const openVpnPath = await findOpenVpnBinary();
+
+  if (!openVpnPath) {
+    const openError = await shell.openPath(relayConfig.targetPath);
+    activeNativeConnection = null;
+
+    return {
+      ok: false,
+      mode: "profile-ready",
+      connectedAt: new Date().toISOString(),
+      countryCode: request.countryCode,
+      protocol: request.protocol,
+      relayHost: request.relayHost,
+      relayIp: request.relayIp,
+      filePath: relayConfig.targetPath,
+      openError: openError || "OpenVPN CLI is not installed. The profile was opened for a VPN client."
+    };
+  }
+
+  if (vpnProcess && !vpnProcess.killed) {
+    vpnProcess.kill("SIGTERM");
+  }
+
+  vpnLog = [];
+  activeNativeConnection = {
+    countryCode: request.countryCode,
+    countryName: request.countryName,
+    protocol: request.protocol,
+    relayHost: request.relayHost,
+    relayIp: request.relayIp,
+    connectedAt: new Date().toISOString()
+  };
+  vpnProcess = spawn(openVpnPath, ["--config", relayConfig.targetPath, "--verb", "3", "--auth-nocache"], {
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+
+  vpnProcess.stdout.on("data", appendVpnLog);
+  vpnProcess.stderr.on("data", appendVpnLog);
+  vpnProcess.on("exit", (code) => {
+    appendVpnLog(`OpenVPN exited with code ${code}`);
+    vpnProcess = null;
+    activeNativeConnection = null;
+  });
+
+  return {
+    ok: true,
+    mode: "native",
+    connectedAt: new Date().toISOString(),
+    countryCode: request.countryCode,
+    protocol: request.protocol,
+    relayHost: request.relayHost,
+    relayIp: request.relayIp,
+    filePath: relayConfig.targetPath,
+    pid: vpnProcess.pid
+  };
+}
+
+async function handleDeepLink(url) {
+  const request = parseDeepLink(url);
+
+  if (!request) {
+    return;
+  }
+
+  if (!app.isReady()) {
+    pendingDeepLink = url;
+    return;
+  }
+
+  appendVpnLog(`System link requested: ${request.relayHost}`);
+  await connectRelayNative(request);
+
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
+}
+
 function createWindow() {
-  const window = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1240,
     height: 820,
     minWidth: 980,
@@ -81,60 +201,44 @@ function createWindow() {
   });
 
   if (isDev) {
-    window.loadURL(process.env.VEEP_N_DEV_URL);
+    mainWindow.loadURL(process.env.VEEP_N_DEV_URL);
   } else {
-    window.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
+}
+
+const gotLock = app.requestSingleInstanceLock();
+
+if (!gotLock) {
+  app.quit();
+} else {
+  if (process.defaultApp && process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient("veepn", process.execPath, [path.resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient("veepn");
+  }
+
+  app.on("second-instance", (_event, commandLine) => {
+    const deepLink = commandLine.find((item) => item.startsWith("veepn://"));
+    if (deepLink) {
+      void handleDeepLink(deepLink);
+    }
+  });
+
+  app.on("open-url", (event, url) => {
+    event.preventDefault();
+    void handleDeepLink(url);
+  });
 }
 
 app.whenReady().then(() => {
   ipcMain.handle("vpn:connect", async (_event, request) => {
     if (request.relayHost) {
-      const relayConfig = await writeRelayProfile(request.relayHost);
-
       if (request.nativeConnect) {
-        const openVpnPath = await findOpenVpnBinary();
-
-        if (!openVpnPath) {
-          return {
-            ok: false,
-            mode: "profile-ready",
-            connectedAt: new Date().toISOString(),
-            countryCode: request.countryCode,
-            protocol: request.protocol,
-            relayHost: request.relayHost,
-            relayIp: request.relayIp,
-            filePath: relayConfig.targetPath,
-            openError: "OpenVPN is not installed on this computer."
-          };
-        }
-
-        if (vpnProcess && !vpnProcess.killed) {
-          vpnProcess.kill("SIGTERM");
-        }
-
-        vpnLog = [];
-        vpnProcess = spawn(openVpnPath, ["--config", relayConfig.targetPath, "--verb", "3"], {
-          stdio: ["ignore", "pipe", "pipe"]
-        });
-
-        vpnProcess.stdout.on("data", appendVpnLog);
-        vpnProcess.stderr.on("data", appendVpnLog);
-        vpnProcess.on("exit", (code) => appendVpnLog(`OpenVPN exited with code ${code}`));
-
-        return {
-          ok: true,
-          mode: "native",
-          connectedAt: new Date().toISOString(),
-          countryCode: request.countryCode,
-          protocol: request.protocol,
-          relayHost: request.relayHost,
-          relayIp: request.relayIp,
-          filePath: relayConfig.targetPath,
-          pid: vpnProcess.pid
-        };
+        return connectRelayNative(request);
       }
 
+      const relayConfig = await writeRelayProfile(request.relayHost);
       const openError = await shell.openPath(relayConfig.targetPath);
 
       return {
@@ -166,6 +270,7 @@ app.whenReady().then(() => {
       vpnProcess.kill("SIGTERM");
       vpnProcess = null;
     }
+    activeNativeConnection = null;
 
     return { ok: true, disconnectedAt: new Date().toISOString() };
   });
@@ -182,6 +287,11 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+
+  if (pendingDeepLink) {
+    void handleDeepLink(pendingDeepLink);
+    pendingDeepLink = null;
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

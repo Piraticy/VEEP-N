@@ -193,6 +193,11 @@ h2 span {
   border-color: rgba(124, 199, 255, 0.42);
 }
 
+.status-pill.handoff {
+  color: #7cc7ff;
+  border-color: rgba(124, 199, 255, 0.42);
+}
+
 .spin {
   animation: spin 0.9s linear infinite;
 }
@@ -247,6 +252,11 @@ h2 span {
   background: linear-gradient(90deg, rgba(124, 199, 255, 0.13), rgba(11, 25, 44, 0.74));
 }
 
+.session-strip.handoff {
+  border-color: rgba(124, 199, 255, 0.44);
+  background: linear-gradient(90deg, rgba(124, 199, 255, 0.16), rgba(11, 25, 44, 0.74));
+}
+
 .session-icon {
   display: grid;
   width: 40px;
@@ -258,6 +268,10 @@ h2 span {
 }
 
 .session-strip.profile-ready .session-icon {
+  background: #7cc7ff;
+}
+
+.session-strip.handoff .session-icon {
   background: #7cc7ff;
 }
 
@@ -297,6 +311,18 @@ h2 span {
 
 .connection-panel {
   padding: 16px;
+}
+
+.connection-panel.connected {
+  border-color: rgba(116, 228, 174, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(116, 228, 174, 0.08),
+    0 24px 70px rgba(26, 201, 132, 0.14);
+}
+
+.connection-panel.connecting,
+.connection-panel.handoff {
+  border-color: rgba(124, 199, 255, 0.36);
 }
 
 .panel-heading {
@@ -340,16 +366,33 @@ h2 span {
 }
 
 .route-map.connecting .map-line,
+.route-map.handoff .map-line,
 .route-map.connected .map-line {
   animation: flow 1.35s linear infinite;
   background-size: 220% 100%;
 }
 
 .route-map.connected .node.exit,
+.route-map.handoff .node.exit,
 .route-map.connecting .node.exit {
   box-shadow:
     0 0 0 10px rgba(116, 228, 174, 0.14),
     0 0 28px rgba(116, 228, 174, 0.5);
+}
+
+.route-map.connected {
+  background:
+    linear-gradient(rgba(116, 228, 174, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 199, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 74% 38%, rgba(116, 228, 174, 0.26), transparent 12rem),
+    radial-gradient(circle at 48% 52%, rgba(124, 199, 255, 0.18), transparent 14rem),
+    linear-gradient(160deg, rgba(8, 17, 31, 0.25), rgba(116, 228, 174, 0.1));
+  background-size:
+    44px 44px,
+    44px 44px,
+    auto,
+    auto,
+    auto;
 }
 
 .route-map.profile-ready .node.exit {
@@ -425,6 +468,37 @@ h2 span {
   background: #74e4ae;
 }
 
+.vpn-visual-status {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(220, 231, 247, 0.14);
+  border-radius: 999px;
+  color: #dce7f7;
+  background: rgba(7, 17, 31, 0.76);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  transform: translateX(-50%);
+}
+
+.route-map.connected .vpn-visual-status {
+  border-color: rgba(116, 228, 174, 0.48);
+  color: #07111f;
+  background: #74e4ae;
+}
+
+.route-map.connecting .vpn-visual-status,
+.route-map.handoff .vpn-visual-status {
+  border-color: rgba(124, 199, 255, 0.48);
+  color: #07111f;
+  background: #7cc7ff;
+}
+
 .connection-meter {
   overflow: hidden;
   height: 8px;
@@ -450,6 +524,11 @@ h2 span {
 
 .connection-meter.profile-ready span {
   width: 68%;
+  background: #7cc7ff;
+}
+
+.connection-meter.handoff span {
+  width: 76%;
   background: #7cc7ff;
 }
 
@@ -931,6 +1010,10 @@ h2 span {
 
   .route-map {
     height: 220px;
+  }
+
+  .vpn-visual-status {
+    bottom: 12px;
   }
 
   .node.home {
