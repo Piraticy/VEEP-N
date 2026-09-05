@@ -1,6 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="VEEP-N">
-  <rect width="128" height="128" rx="26" fill="#08111f"/>
-  <path d="M64 22 94 34v26c0 22-12 37-30 46-18-9-30-24-30-46V34l30-12Z" fill="#10241f" stroke="#74e4ae" stroke-width="8" stroke-linejoin="round"/>
-  <path d="m50 63 10 10 22-25" fill="none" stroke="#7cc7ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="64" cy="64" r="54" fill="none" stroke="#74e4ae" stroke-opacity=".16" stroke-width="8"/>
+  <defs>
+    <linearGradient id="shell" x1="20" y1="16" x2="112" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a1a2c"/>
+      <stop offset=".58" stop-color="#102820"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <linearGradient id="route" x1="34" y1="84" x2="94" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#74e4ae"/>
+      <stop offset=".56" stop-color="#7cc7ff"/>
+      <stop offset="1" stop-color="#f0c36a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#shell)"/>
+  <path d="M64 18 98 32v29c0 24-13 40-34 50-21-10-34-26-34-50V32l34-14Z" fill="#091523" stroke="#74e4ae" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M38 48c16 9 31 21 42 36M90 43 64 88 45 64" fill="none" stroke="url(#route)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M42 86c15-12 31-18 49-20" fill="none" stroke="#7cc7ff" stroke-width="5" stroke-linecap="round" opacity=".62"/>
+  <circle cx="38" cy="48" r="8" fill="#74e4ae"/>
+  <circle cx="90" cy="43" r="8" fill="#f0c36a"/>
+  <circle cx="45" cy="64" r="6" fill="#f8fbff"/>
+  <circle cx="64" cy="88" r="7" fill="#7cc7ff"/>
+  <circle cx="64" cy="64" r="54" fill="none" stroke="#7cc7ff" stroke-opacity=".14" stroke-width="6"/>
 </svg>

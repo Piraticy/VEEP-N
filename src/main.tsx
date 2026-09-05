@@ -757,6 +757,7 @@ function App() {
   }, []);
 
   const canNativeConnect = Boolean(isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
+  const canRuntimeConnect = Boolean(!isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
   const relayCountries = new Set(relays.map((relay) => relay.countryShort)).size;
   const activeCountryName = selectedRelay?.countryLong ?? selected.name;
   const activeCountryCode = selectedRelay?.countryShort ?? selected.code;
@@ -775,7 +776,7 @@ function App() {
           relayIp: selectedRelay?.ip ?? "",
           deviceName,
           deviceType,
-          mode: canNativeConnect ? "native" : selectedRelay ? "profile" : "demo",
+          mode: canNativeConnect ? "native" : canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo",
           connectedAt: status === "connected" ? new Date().toISOString() : null,
           updatedAt: new Date().toISOString(),
           message: ""
@@ -783,7 +784,7 @@ function App() {
   const readiness = selectedRelay
     ? canNativeConnect
       ? "Ready for desktop tunnel"
-      : runtimeStatus?.openVpnInstalled
+      : canRuntimeConnect
         ? "Ready to connect"
         : "Ready to export OpenVPN profile"
     : "Bridge demo";
@@ -793,7 +794,9 @@ function App() {
       : status === "disconnecting"
         ? "Disconnecting..."
         : selectedRelay
-          ? "Connect VPN"
+          ? canNativeConnect || canRuntimeConnect
+            ? "Connect VPN"
+            : "Export profile"
           : "Demo connect";
 
   async function connect() {
@@ -802,7 +805,7 @@ function App() {
     await publishSharedState({
       status: "connecting",
       message: selectedRelay ? `Preparing ${selectedRelay.hostname}` : `Preparing ${activeCountryName}`,
-      mode: selectedRelay ? "profile" : "demo"
+      mode: canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo"
     });
 
     if (window.veepnDesktop) {
@@ -827,7 +830,7 @@ function App() {
       if (result.mode === "native") {
         setConnectionMessage(`OpenVPN process started${result.pid ? ` with PID ${result.pid}` : ""}.`);
       }
-    } else if (selectedRelay) {
+    } else if (selectedRelay && canRuntimeConnect) {
       try {
         const response = await fetch("/api/vpn/connect", {
           method: "POST",
@@ -871,13 +874,22 @@ function App() {
         });
       }
       return;
+    } else if (selectedRelay) {
+      await exportRelayConfig();
+      setStatus("profile-ready");
+      await publishSharedState({
+        status: "profile-ready",
+        mode: "profile",
+        message: `${selectedRelay.hostname} profile is ready on ${deviceName}.`
+      });
+      return;
     } else {
       await new Promise((resolve) => window.setTimeout(resolve, 1300));
     }
     setStatus("connected");
     await publishSharedState({
       status: "connected",
-      mode: canNativeConnect ? "native" : "demo",
+      mode: canNativeConnect ? "native" : canRuntimeConnect ? "container" : "demo",
       connectedAt: new Date().toISOString(),
       message: canNativeConnect
         ? `${activeCountryName} tunnel is running on ${deviceName}.`

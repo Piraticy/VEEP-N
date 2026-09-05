@@ -9,6 +9,7 @@ endpoints.
 - React web app with a global country picker.
 - Electron desktop shell sharing the same UI.
 - Installable mobile PWA shell for Android and iOS browsers.
+- Custom VEEP-N app icon and favicon.
 - Shared Docker web connection state so another browser/device can see the
   current bridge status.
 - Docker OpenVPN runner for app-managed relay connection testing.
@@ -34,6 +35,10 @@ tracks the tunnel from the app runtime. It does not make the host computer or
 phone route all traffic through the VPN; full-device routing still belongs in a
 native desktop/mobile app because the operating system must grant VPN
 permissions.
+
+Vercel mode hosts the live web/PWA experience and serverless relay/profile APIs.
+It cannot start OpenVPN because hosted serverless functions do not expose a VPN
+tunnel device or long-running system process.
 
 Android and iOS are supported as an installable web app for discovery, status,
 and profile export. Native one-tap mobile VPN tunneling requires a platform
@@ -93,3 +98,15 @@ Phones on the same network can open the Docker host address and install VEEP-N
 from the browser. The Docker backend keeps a shared connection-status record, so
 mobile and desktop browser views show the same connecting/profile-ready/connected
 state.
+
+## Deploy on Vercel
+
+The project includes `vercel.json` and Vercel API functions for:
+
+- relay discovery
+- runtime status
+- OpenVPN profile download
+- graceful live-mode connect/disconnect responses
+
+Vercel is the live web/PWA host. Use Docker or Electron for app-managed native
+VPN tunnel testing.

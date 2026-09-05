@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": {
+    "VEEP_N_RELAY_CSV_URLS": "http://150.40.105.10:46711/api/iphone/,http://150.40.105.24:38827/api/iphone/,http://160.251.62.107:46080/api/iphone/,http://62.133.35.246:2265/api/iphone/,https://www.vpngate.net/api/iphone/"
+  }
+}
