@@ -617,6 +617,11 @@ function App() {
   const [connectionMessage, setConnectionMessage] = React.useState("");
   const [relaySort, setRelaySort] = React.useState<"score" | "speed" | "ping">("score");
   const [sharedState, setSharedState] = React.useState<SharedConnectionState | null>(null);
+  const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
+  const [installState, setInstallState] = React.useState<"available" | "installed" | "unsupported">(
+    window.matchMedia("(display-mode: standalone)").matches ? "installed" : "unsupported"
+  );
+  const [installMessage, setInstallMessage] = React.useState("");
 
   const visibleRelays = React.useMemo(() => {
     return relays
@@ -772,6 +777,29 @@ function App() {
     }
   }, []);
 
+  React.useEffect(() => {
+    const handleInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+      setInstallState("available");
+      setInstallMessage("");
+    };
+
+    const handleInstalled = () => {
+      setInstallPrompt(null);
+      setInstallState("installed");
+      setInstallMessage("Installed on this device.");
+    };
+
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, []);
+
   const canNativeConnect = Boolean(isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
   const canRuntimeConnect = Boolean(!isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
   const canSystemConnect = Boolean(!isDesktop && !canRuntimeConnect && selectedRelay);
@@ -864,6 +892,31 @@ function App() {
     });
 
     return `veepn://connect?${params.toString()}`;
+  }
+
+  async function installWebApp() {
+    if (installState === "installed") {
+      setInstallMessage("VEEP-N is already installed.");
+      return;
+    }
+
+    if (!installPrompt) {
+      setInstallMessage("Use your browser install button to add VEEP-N to this PC.");
+      return;
+    }
+
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    setInstallPrompt(null);
+
+    if (choice.outcome === "accepted") {
+      setInstallState("installed");
+      setInstallMessage("Installed on this device.");
+      return;
+    }
+
+    setInstallState("unsupported");
+    setInstallMessage("Install cancelled.");
   }
 
   async function connect() {
@@ -1080,15 +1133,28 @@ function App() {
               <span>{isDesktop ? "Desktop" : deviceType === "mobile" ? "Mobile" : "Web"}</span>
             </div>
           </div>
-          <div className={`status-pill ${status}`}>
-            {status === "connecting" || status === "disconnecting" ? (
-              <LoaderCircle className="spin" size={15} />
-            ) : (
-              <Circle size={10} fill="currentColor" />
+          <div className="topbar-actions">
+            {!isDesktop && (
+              <button
+                className={`install-button ${installState}`}
+                onClick={installWebApp}
+                title="Install VEEP-N as a desktop web app"
+              >
+                <Download size={15} />
+                {installState === "installed" ? "Installed" : "Install app"}
+              </button>
             )}
-            {statusLabel}
+            <div className={`status-pill ${status}`}>
+              {status === "connecting" || status === "disconnecting" ? (
+                <LoaderCircle className="spin" size={15} />
+              ) : (
+                <Circle size={10} fill="currentColor" />
+              )}
+              {statusLabel}
+            </div>
           </div>
         </header>
+        {installMessage && !isDesktop && <div className="install-hint">{installMessage}</div>}
 
         <section className={`session-strip ${status}`} aria-live="polite">
           <div className="session-icon">

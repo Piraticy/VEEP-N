@@ -29,6 +29,16 @@ interface Window {
       relay: PublicRelay;
     }>;
   };
+  MSStream?: unknown;
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt: () => Promise<void>;
 }
 
 type PublicRelay = {

@@ -1,11 +1,12 @@
 {
   "name": "VEEP-N VPN Console",
   "short_name": "VEEP-N",
-  "description": "Cross-device VPN bridge console for relay discovery and OpenVPN profiles.",
+  "id": "/",
+  "description": "Installable VPN bridge console for relay discovery, desktop handoff, and OpenVPN profiles.",
   "start_url": "/",
   "scope": "/",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#07111f",
   "theme_color": "#08111f",
   "icons": [
@@ -16,5 +17,6 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["utilities", "security", "productivity"]
+  "categories": ["utilities", "security", "productivity"],
+  "prefer_related_applications": false
 }

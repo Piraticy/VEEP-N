@@ -198,6 +198,48 @@ h2 span {
   border-color: rgba(124, 199, 255, 0.42);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.install-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(124, 199, 255, 0.3);
+  border-radius: 999px;
+  color: #dce7f7;
+  font-weight: 800;
+  background: rgba(124, 199, 255, 0.1);
+  white-space: nowrap;
+}
+
+.install-button:hover {
+  border-color: rgba(124, 199, 255, 0.56);
+  background: rgba(124, 199, 255, 0.16);
+}
+
+.install-button.installed {
+  color: #74e4ae;
+  border-color: rgba(116, 228, 174, 0.4);
+  background: rgba(116, 228, 174, 0.1);
+}
+
+.install-hint {
+  margin: -4px 0 14px auto;
+  max-width: 420px;
+  padding: 9px 12px;
+  border: 1px solid rgba(124, 199, 255, 0.22);
+  border-radius: 8px;
+  color: #b8c7dd;
+  font-size: 0.88rem;
+  background: rgba(11, 25, 44, 0.66);
+}
+
 .spin {
   animation: spin 0.9s linear infinite;
 }
@@ -978,6 +1020,23 @@ h2 span {
   .relay-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .topbar-actions {
+    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .install-button,
+  .status-pill {
+    justify-content: center;
+    flex: 1 1 130px;
+  }
+
+  .install-hint {
+    margin: -4px 0 12px;
+    max-width: none;
   }
 
   h1 {
