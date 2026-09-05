@@ -597,6 +597,21 @@ function getStatusLabel(status: ConnectionStatus) {
   return "Idle";
 }
 
+function getManualInstallMessage(deviceType: SharedConnectionState["deviceType"]) {
+  const userAgent = navigator.userAgent;
+  const isIos = /iPhone|iPad|iPod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  if (isIos) {
+    return "On iPhone or iPad, open Safari, then Share > Add to Home Screen.";
+  }
+
+  if (deviceType === "mobile") {
+    return "On Android, open Chrome, then use the browser menu > Add to Home screen.";
+  }
+
+  return "Open VEEP-N in Chrome or Edge, then use the address-bar install icon or browser menu > Install app.";
+}
+
 function App() {
   const isDesktop = Boolean(window.veepnDesktop);
   const deviceType = React.useMemo(() => getDeviceType(), []);
@@ -901,7 +916,7 @@ function App() {
     }
 
     if (!installPrompt) {
-      setInstallMessage("Use your browser install button to add VEEP-N to this PC.");
+      setInstallMessage(getManualInstallMessage(deviceType));
       return;
     }
 
