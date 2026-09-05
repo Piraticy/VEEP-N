@@ -1213,34 +1213,40 @@ function App() {
             <div className={`route-map ${status}`} aria-label="Global route visualization">
               <svg className="route-canvas" viewBox="0 0 1000 260" aria-hidden="true">
                 <defs>
-                  <linearGradient id="routePrimary" x1="210" y1="164" x2="788" y2="82" gradientUnits="userSpaceOnUse">
+                  <radialGradient id="globeGlow" cx="50%" cy="48%" r="55%">
+                    <stop stopColor="#7cc7ff" stopOpacity="0.2" />
+                    <stop offset="0.58" stopColor="#14324a" stopOpacity="0.16" />
+                    <stop offset="1" stopColor="#07111f" stopOpacity="0" />
+                  </radialGradient>
+                  <linearGradient id="routePrimary" x1="190" y1="162" x2="810" y2="92" gradientUnits="userSpaceOnUse">
                     <stop stopColor="#74e4ae" />
                     <stop offset="0.58" stopColor="#7cc7ff" />
                     <stop offset="1" stopColor="#f0c36a" />
                   </linearGradient>
-                  <linearGradient id="routeReturn" x1="788" y1="132" x2="210" y2="176" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#7cc7ff" />
-                    <stop offset="1" stopColor="#74e4ae" />
+                  <linearGradient id="routeBeam" x1="190" y1="162" x2="810" y2="92" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#74e4ae" stopOpacity="0" />
+                    <stop offset="0.14" stopColor="#74e4ae" stopOpacity="0.26" />
+                    <stop offset="0.62" stopColor="#7cc7ff" stopOpacity="0.22" />
+                    <stop offset="1" stopColor="#f0c36a" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <path
-                  className="land-mass land-one"
-                  d="M87 123c34-42 126-57 196-38 45 12 70 36 122 33 58-3 82-35 145-38 80-4 150 41 184 82-46 30-123 48-206 42-80-5-117-32-181-30-62 2-93 30-158 26-56-4-98-29-102-77Z"
-                />
-                <path
-                  className="land-mass land-two"
-                  d="M611 71c82-23 177-7 247 40 46 31 55 76 17 103-45 32-139 24-198-11-41-25-41-53-83-72-36-16-82-16-118-18 24-20 65-34 135-42Z"
-                />
-                <path className="range-ring outer" d="M110 139c106-86 671-86 780 0-109 86-674 86-780 0Z" />
-                <path className="range-ring inner" d="M264 132c77-62 403-62 481 0-78 63-404 63-481 0Z" />
-                <path className="route-arc route-primary" d="M210 158C341 66 640 39 788 104" />
-                <path className="route-arc route-return" d="M788 138C652 207 377 204 210 170" />
-                <path className="route-arc route-shadow" d="M210 158C392 132 555 137 788 104" />
+                <ellipse className="globe-field" cx="500" cy="132" rx="345" ry="96" />
+                <path className="globe-line meridian left" d="M500 36C382 64 382 200 500 228" />
+                <path className="globe-line meridian right" d="M500 36C618 64 618 200 500 228" />
+                <path className="globe-line latitude top" d="M188 104c159 42 465 42 624 0" />
+                <path className="globe-line latitude mid" d="M158 132c176 48 508 48 684 0" />
+                <path className="globe-line latitude bottom" d="M188 160c159 42 465 42 624 0" />
+                <path className="route-beam" d="M190 162C350 55 650 48 810 92" />
+                <path className="route-arc route-primary" d="M190 162C350 55 650 48 810 92" />
+                <path className="route-arc route-return" d="M810 130C642 204 365 203 190 176" />
+                <path className="route-arc route-dash" d="M190 162C350 55 650 48 810 92" />
+                <circle className="route-hub" cx="500" cy="132" r="34" />
+                <path className="route-hub-mark" d="M500 112l19 8v17c0 13-7 22-19 28-12-6-19-15-19-28v-17l19-8Z" />
                 <circle className="signal-dot dot-one" r="6">
-                  <animateMotion dur="2.8s" repeatCount="indefinite" path="M210 158C341 66 640 39 788 104" />
+                  <animateMotion dur="2.8s" repeatCount="indefinite" path="M190 162C350 55 650 48 810 92" />
                 </circle>
                 <circle className="signal-dot dot-two" r="4">
-                  <animateMotion dur="3.5s" repeatCount="indefinite" path="M788 138C652 207 377 204 210 170" />
+                  <animateMotion dur="3.5s" repeatCount="indefinite" path="M810 130C642 204 365 203 190 176" />
                 </circle>
               </svg>
               <div className="node home">

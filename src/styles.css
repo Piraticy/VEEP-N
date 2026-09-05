@@ -393,15 +393,27 @@ h2 span {
   overflow: hidden;
   height: 250px;
   margin: 14px 0;
-  border: 1px solid rgba(220, 231, 247, 0.1);
+  border: 1px solid rgba(124, 199, 255, 0.14);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 74% 42%, rgba(116, 228, 174, 0.16), transparent 12rem),
-    radial-gradient(circle at 42% 48%, rgba(124, 199, 255, 0.14), transparent 14rem),
-    linear-gradient(160deg, rgba(8, 17, 31, 0.7), rgba(15, 45, 52, 0.52));
+    radial-gradient(circle at 78% 38%, rgba(116, 228, 174, 0.18), transparent 12rem),
+    radial-gradient(circle at 27% 52%, rgba(124, 199, 255, 0.12), transparent 12rem),
+    linear-gradient(135deg, rgba(5, 14, 28, 0.98), rgba(11, 34, 48, 0.9));
   background-size:
     auto,
     auto;
+}
+
+.route-map::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(rgba(124, 199, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 199, 255, 0.045) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse at center, #000 0 58%, transparent 82%);
+  opacity: 0.72;
 }
 
 .route-map.connected .node.exit,
@@ -414,9 +426,9 @@ h2 span {
 
 .route-map.connected {
   background:
-    radial-gradient(circle at 74% 38%, rgba(116, 228, 174, 0.26), transparent 12rem),
-    radial-gradient(circle at 48% 52%, rgba(124, 199, 255, 0.18), transparent 14rem),
-    linear-gradient(160deg, rgba(8, 17, 31, 0.25), rgba(116, 228, 174, 0.1));
+    radial-gradient(circle at 78% 38%, rgba(116, 228, 174, 0.32), transparent 12rem),
+    radial-gradient(circle at 42% 48%, rgba(124, 199, 255, 0.18), transparent 14rem),
+    linear-gradient(135deg, rgba(5, 14, 28, 0.98), rgba(12, 48, 42, 0.9));
   background-size:
     auto,
     auto;
@@ -434,28 +446,28 @@ h2 span {
   height: 100%;
 }
 
-.route-canvas::selection {
-  background: transparent;
+.globe-field {
+  fill: url(#globeGlow);
+  stroke: rgba(124, 199, 255, 0.22);
+  stroke-width: 1.5;
 }
 
-.land-mass {
-  fill: rgba(124, 199, 255, 0.07);
-  stroke: rgba(124, 199, 255, 0.11);
-  stroke-width: 2;
-}
-
-.land-two {
-  fill: rgba(116, 228, 174, 0.06);
-}
-
-.range-ring {
+.globe-line {
   fill: none;
   stroke: rgba(124, 199, 255, 0.18);
-  stroke-width: 1.4;
+  stroke-width: 1.2;
 }
 
-.range-ring.inner {
-  stroke: rgba(116, 228, 174, 0.18);
+.globe-line.meridian {
+  stroke: rgba(116, 228, 174, 0.12);
+}
+
+.route-beam {
+  fill: none;
+  stroke: url(#routeBeam);
+  stroke-linecap: round;
+  stroke-width: 34;
+  opacity: 0.76;
 }
 
 .route-arc {
@@ -465,18 +477,40 @@ h2 span {
 
 .route-primary {
   stroke: url(#routePrimary);
-  stroke-width: 4;
-  filter: drop-shadow(0 0 10px rgba(116, 228, 174, 0.38));
+  stroke-width: 4.8;
+  filter: drop-shadow(0 0 12px rgba(116, 228, 174, 0.44));
 }
 
 .route-return {
-  stroke: url(#routeReturn);
-  stroke-width: 2.5;
-  opacity: 0.62;
+  stroke: rgba(124, 199, 255, 0.62);
+  stroke-width: 2.8;
+  opacity: 0.8;
 }
 
-.route-shadow {
-  stroke: rgba(124, 199, 255, 0.16);
+.route-dash {
+  stroke: rgba(248, 251, 255, 0.78);
+  stroke-dasharray: 10 24;
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.route-map.connecting .route-dash,
+.route-map.connected .route-dash,
+.route-map.handoff .route-dash {
+  animation: dashFlow 1.8s linear infinite;
+  opacity: 0.88;
+}
+
+.route-hub {
+  fill: rgba(7, 17, 31, 0.7);
+  stroke: rgba(124, 199, 255, 0.28);
+  stroke-width: 1.4;
+}
+
+.route-hub-mark {
+  fill: rgba(116, 228, 174, 0.13);
+  stroke: rgba(116, 228, 174, 0.56);
+  stroke-linejoin: round;
   stroke-width: 2;
 }
 
@@ -499,24 +533,41 @@ h2 span {
 .node {
   position: absolute;
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   place-items: center;
   border-radius: 50%;
   background: #f8fbff;
   color: #07111f;
-  box-shadow: 0 0 0 10px rgba(248, 251, 255, 0.1);
+  box-shadow:
+    0 0 0 12px rgba(248, 251, 255, 0.1),
+    0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.node::before {
+  position: absolute;
+  inset: -19px;
+  content: "";
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  opacity: 0.12;
 }
 
 .node.home {
-  left: 18%;
+  left: 16%;
   top: 52%;
 }
 
 .node.exit {
-  right: 18%;
-  top: 37%;
+  right: 16%;
+  top: 35%;
   background: #74e4ae;
+}
+
+.route-map.connecting .node::before,
+.route-map.connected .node::before,
+.route-map.handoff .node::before {
+  animation: nodePulse 1.9s ease-out infinite;
 }
 
 .vpn-visual-status {
@@ -930,13 +981,25 @@ h2 span {
   }
 }
 
-@keyframes flow {
+@keyframes dashFlow {
   0% {
-    background-position: 220% 0;
+    stroke-dashoffset: 34;
   }
 
   100% {
-    background-position: -220% 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes nodePulse {
+  0% {
+    opacity: 0.22;
+    transform: scale(0.82);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.24);
   }
 }
 
