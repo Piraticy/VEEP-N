@@ -1213,40 +1213,41 @@ function App() {
             <div className={`route-map ${status}`} aria-label="Global route visualization">
               <svg className="route-canvas" viewBox="0 0 1000 260" aria-hidden="true">
                 <defs>
-                  <radialGradient id="globeGlow" cx="50%" cy="48%" r="55%">
-                    <stop stopColor="#7cc7ff" stopOpacity="0.2" />
-                    <stop offset="0.58" stopColor="#14324a" stopOpacity="0.16" />
-                    <stop offset="1" stopColor="#07111f" stopOpacity="0" />
-                  </radialGradient>
-                  <linearGradient id="routePrimary" x1="190" y1="162" x2="810" y2="92" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="tunnelBeam" x1="168" y1="132" x2="832" y2="132" gradientUnits="userSpaceOnUse">
                     <stop stopColor="#74e4ae" />
-                    <stop offset="0.58" stopColor="#7cc7ff" />
+                    <stop offset="0.48" stopColor="#7cc7ff" />
                     <stop offset="1" stopColor="#f0c36a" />
                   </linearGradient>
-                  <linearGradient id="routeBeam" x1="190" y1="162" x2="810" y2="92" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="tunnelGlow" x1="168" y1="132" x2="832" y2="132" gradientUnits="userSpaceOnUse">
                     <stop stopColor="#74e4ae" stopOpacity="0" />
-                    <stop offset="0.14" stopColor="#74e4ae" stopOpacity="0.26" />
-                    <stop offset="0.62" stopColor="#7cc7ff" stopOpacity="0.22" />
+                    <stop offset="0.18" stopColor="#74e4ae" stopOpacity="0.22" />
+                    <stop offset="0.5" stopColor="#7cc7ff" stopOpacity="0.3" />
+                    <stop offset="0.82" stopColor="#f0c36a" stopOpacity="0.18" />
                     <stop offset="1" stopColor="#f0c36a" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <ellipse className="globe-field" cx="500" cy="132" rx="345" ry="96" />
-                <path className="globe-line meridian left" d="M500 36C382 64 382 200 500 228" />
-                <path className="globe-line meridian right" d="M500 36C618 64 618 200 500 228" />
-                <path className="globe-line latitude top" d="M188 104c159 42 465 42 624 0" />
-                <path className="globe-line latitude mid" d="M158 132c176 48 508 48 684 0" />
-                <path className="globe-line latitude bottom" d="M188 160c159 42 465 42 624 0" />
-                <path className="route-beam" d="M190 162C350 55 650 48 810 92" />
-                <path className="route-arc route-primary" d="M190 162C350 55 650 48 810 92" />
-                <path className="route-arc route-return" d="M810 130C642 204 365 203 190 176" />
-                <path className="route-arc route-dash" d="M190 162C350 55 650 48 810 92" />
-                <circle className="route-hub" cx="500" cy="132" r="34" />
-                <path className="route-hub-mark" d="M500 112l19 8v17c0 13-7 22-19 28-12-6-19-15-19-28v-17l19-8Z" />
+                <path className="perspective-line top" d="M156 74H844" />
+                <path className="perspective-line mid" d="M118 132H882" />
+                <path className="perspective-line bottom" d="M156 190H844" />
+                <path className="perspective-line diagonal-left" d="M168 132 386 58" />
+                <path className="perspective-line diagonal-right" d="M832 132 614 58" />
+                <path className="perspective-line diagonal-left lower" d="M168 132 386 202" />
+                <path className="perspective-line diagonal-right lower" d="M832 132 614 202" />
+                <path className="tunnel-glow" d="M178 132C320 80 680 80 822 132C680 184 320 184 178 132Z" />
+                <path className="tunnel-shell outer" d="M178 132C320 68 680 68 822 132C680 196 320 196 178 132Z" />
+                <path className="tunnel-shell inner" d="M234 132C358 92 642 92 766 132C642 172 358 172 234 132Z" />
+                <path className="tunnel-beam upper" d="M170 132C330 80 670 80 830 132" />
+                <path className="tunnel-beam lower" d="M170 132C330 184 670 184 830 132" />
+                <path className="tunnel-flow" d="M170 132C330 80 670 80 830 132" />
+                <circle className="core-ring outer" cx="500" cy="132" r="58" />
+                <circle className="core-ring inner" cx="500" cy="132" r="39" />
+                <path className="core-shield" d="M500 98l30 13v25c0 24-13 39-30 48-17-9-30-24-30-48v-25l30-13Z" />
+                <path className="core-check" d="m486 133 10 10 22-25" />
                 <circle className="signal-dot dot-one" r="6">
-                  <animateMotion dur="2.8s" repeatCount="indefinite" path="M190 162C350 55 650 48 810 92" />
+                  <animateMotion dur="2.4s" repeatCount="indefinite" path="M170 132C330 80 670 80 830 132" />
                 </circle>
                 <circle className="signal-dot dot-two" r="4">
-                  <animateMotion dur="3.5s" repeatCount="indefinite" path="M810 130C642 204 365 203 190 176" />
+                  <animateMotion dur="3.2s" repeatCount="indefinite" path="M170 132C330 184 670 184 830 132" />
                 </circle>
               </svg>
               <div className="node home">

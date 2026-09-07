@@ -446,72 +446,115 @@ h2 span {
   height: 100%;
 }
 
-.globe-field {
-  fill: url(#globeGlow);
-  stroke: rgba(124, 199, 255, 0.22);
-  stroke-width: 1.5;
-}
-
-.globe-line {
+.perspective-line {
   fill: none;
-  stroke: rgba(124, 199, 255, 0.18);
+  stroke: rgba(124, 199, 255, 0.12);
+  stroke-linecap: round;
   stroke-width: 1.2;
 }
 
-.globe-line.meridian {
-  stroke: rgba(116, 228, 174, 0.12);
+.perspective-line.mid {
+  stroke: rgba(220, 231, 247, 0.08);
 }
 
-.route-beam {
+.perspective-line.diagonal-left,
+.perspective-line.diagonal-right {
+  stroke: rgba(116, 228, 174, 0.1);
+}
+
+.perspective-line.lower {
+  stroke: rgba(124, 199, 255, 0.1);
+}
+
+.tunnel-glow {
+  fill: url(#tunnelGlow);
+  opacity: 0.82;
+}
+
+.tunnel-shell {
   fill: none;
-  stroke: url(#routeBeam);
   stroke-linecap: round;
-  stroke-width: 34;
-  opacity: 0.76;
 }
 
-.route-arc {
+.tunnel-shell.outer {
+  stroke: rgba(124, 199, 255, 0.22);
+  stroke-width: 1.8;
+}
+
+.tunnel-shell.inner {
+  stroke: rgba(116, 228, 174, 0.18);
+  stroke-width: 1.4;
+}
+
+.tunnel-beam {
   fill: none;
+  stroke: url(#tunnelBeam);
   stroke-linecap: round;
+  filter: drop-shadow(0 0 12px rgba(116, 228, 174, 0.42));
 }
 
-.route-primary {
-  stroke: url(#routePrimary);
-  stroke-width: 4.8;
-  filter: drop-shadow(0 0 12px rgba(116, 228, 174, 0.44));
+.tunnel-beam.upper {
+  stroke-width: 5.4;
 }
 
-.route-return {
-  stroke: rgba(124, 199, 255, 0.62);
-  stroke-width: 2.8;
-  opacity: 0.8;
+.tunnel-beam.lower {
+  stroke-width: 3.8;
+  opacity: 0.64;
 }
 
-.route-dash {
+.tunnel-flow {
+  fill: none;
   stroke: rgba(248, 251, 255, 0.78);
+  stroke-linecap: round;
   stroke-dasharray: 10 24;
   stroke-width: 2;
   opacity: 0;
 }
 
-.route-map.connecting .route-dash,
-.route-map.connected .route-dash,
-.route-map.handoff .route-dash {
+.route-map.connecting .tunnel-flow,
+.route-map.connected .tunnel-flow,
+.route-map.handoff .tunnel-flow {
   animation: dashFlow 1.8s linear infinite;
   opacity: 0.88;
 }
 
-.route-hub {
-  fill: rgba(7, 17, 31, 0.7);
-  stroke: rgba(124, 199, 255, 0.28);
-  stroke-width: 1.4;
+.core-ring {
+  fill: rgba(7, 17, 31, 0.58);
+  stroke-width: 1.5;
 }
 
-.route-hub-mark {
-  fill: rgba(116, 228, 174, 0.13);
-  stroke: rgba(116, 228, 174, 0.56);
+.core-ring.outer {
+  stroke: rgba(124, 199, 255, 0.26);
+}
+
+.core-ring.inner {
+  stroke: rgba(116, 228, 174, 0.38);
+}
+
+.route-map.connecting .core-ring.inner,
+.route-map.connected .core-ring.inner,
+.route-map.handoff .core-ring.inner {
+  animation: corePulse 2.4s ease-in-out infinite;
+}
+
+.core-shield {
+  fill: rgba(116, 228, 174, 0.16);
+  stroke: rgba(116, 228, 174, 0.7);
   stroke-linejoin: round;
   stroke-width: 2;
+}
+
+.core-check {
+  fill: none;
+  stroke: #f8fbff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  opacity: 0;
+}
+
+.route-map.connected .core-check {
+  opacity: 1;
 }
 
 .signal-dot {
@@ -554,12 +597,12 @@ h2 span {
 }
 
 .node.home {
-  left: 16%;
+  left: 14%;
   top: 52%;
 }
 
 .node.exit {
-  right: 16%;
+  right: 14%;
   top: 35%;
   background: #74e4ae;
 }
@@ -1000,6 +1043,19 @@ h2 span {
   100% {
     opacity: 0;
     transform: scale(1.24);
+  }
+}
+
+@keyframes corePulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
   }
 }
 
