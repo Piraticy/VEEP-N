@@ -15,6 +15,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
+  overflow-x: hidden;
   background: #07111f;
 }
 
@@ -22,10 +23,16 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     linear-gradient(120deg, rgba(116, 228, 174, 0.08), transparent 34%),
     linear-gradient(240deg, rgba(124, 199, 255, 0.1), transparent 38%),
     linear-gradient(135deg, #07111f 0%, #0d1827 52%, #10221e 100%);
+}
+
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 button,
@@ -127,6 +134,7 @@ button {
 }
 
 .workspace {
+  width: 100%;
   min-width: 0;
   padding: 26px;
 }
@@ -352,6 +360,7 @@ h2 span {
 }
 
 .connection-panel {
+  min-width: 0;
   padding: 16px;
 }
 
@@ -391,17 +400,17 @@ h2 span {
 .route-map {
   position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
   height: 250px;
   margin: 14px 0;
-  border: 1px solid rgba(124, 199, 255, 0.14);
+  border: 1px solid rgba(124, 199, 255, 0.18);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 78% 38%, rgba(116, 228, 174, 0.18), transparent 12rem),
-    radial-gradient(circle at 27% 52%, rgba(124, 199, 255, 0.12), transparent 12rem),
-    linear-gradient(135deg, rgba(5, 14, 28, 0.98), rgba(11, 34, 48, 0.9));
-  background-size:
-    auto,
-    auto;
+    radial-gradient(circle at 82% 34%, rgba(116, 228, 174, 0.2), transparent 13rem),
+    radial-gradient(circle at 50% 42%, rgba(124, 199, 255, 0.16), transparent 16rem),
+    linear-gradient(135deg, rgba(5, 13, 27, 0.99), rgba(10, 31, 45, 0.92));
+  box-shadow: inset 0 1px 0 rgba(248, 251, 255, 0.04);
 }
 
 .route-map::before {
@@ -409,11 +418,21 @@ h2 span {
   inset: 0;
   content: "";
   background:
-    linear-gradient(rgba(124, 199, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124, 199, 255, 0.045) 1px, transparent 1px);
-  background-size: 52px 52px;
-  mask-image: radial-gradient(ellipse at center, #000 0 58%, transparent 82%);
-  opacity: 0.72;
+    linear-gradient(rgba(124, 199, 255, 0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 199, 255, 0.038) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 0 48%, transparent 82%);
+  opacity: 0.54;
+}
+
+.route-map::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(5, 13, 27, 0.78), transparent 20%, transparent 80%, rgba(5, 13, 27, 0.45)),
+    linear-gradient(180deg, rgba(248, 251, 255, 0.05), transparent 24%, transparent 72%, rgba(0, 0, 0, 0.16));
 }
 
 .route-map.connected .node.exit,
@@ -426,12 +445,9 @@ h2 span {
 
 .route-map.connected {
   background:
-    radial-gradient(circle at 78% 38%, rgba(116, 228, 174, 0.32), transparent 12rem),
-    radial-gradient(circle at 42% 48%, rgba(124, 199, 255, 0.18), transparent 14rem),
-    linear-gradient(135deg, rgba(5, 14, 28, 0.98), rgba(12, 48, 42, 0.9));
-  background-size:
-    auto,
-    auto;
+    radial-gradient(circle at 82% 34%, rgba(116, 228, 174, 0.35), transparent 13rem),
+    radial-gradient(circle at 48% 45%, rgba(124, 199, 255, 0.22), transparent 16rem),
+    linear-gradient(135deg, rgba(5, 13, 27, 0.99), rgba(9, 48, 40, 0.92));
 }
 
 .route-map.profile-ready .node.exit {
@@ -446,105 +462,91 @@ h2 span {
   height: 100%;
 }
 
-.perspective-line {
+.visual-plane {
+  fill: url(#routePanel);
+  stroke-linejoin: round;
+}
+
+.visual-plane.back {
+  stroke: rgba(124, 199, 255, 0.16);
+  stroke-width: 1.5;
+}
+
+.visual-plane.front {
+  stroke: rgba(116, 228, 174, 0.13);
+  stroke-width: 1.2;
+}
+
+.circuit-line {
   fill: none;
-  stroke: rgba(124, 199, 255, 0.12);
+  stroke: rgba(124, 199, 255, 0.14);
   stroke-linecap: round;
   stroke-width: 1.2;
 }
 
-.perspective-line.mid {
-  stroke: rgba(220, 231, 247, 0.08);
+.circuit-line.top-left,
+.circuit-line.bottom-right {
+  stroke: rgba(116, 228, 174, 0.12);
 }
 
-.perspective-line.diagonal-left,
-.perspective-line.diagonal-right {
-  stroke: rgba(116, 228, 174, 0.1);
+.route-shadow {
+  fill: rgba(124, 199, 255, 0.08);
+  filter: blur(10px);
 }
 
-.perspective-line.lower {
-  stroke: rgba(124, 199, 255, 0.1);
-}
-
-.tunnel-glow {
-  fill: url(#tunnelGlow);
-  opacity: 0.82;
-}
-
-.tunnel-shell {
+.route-ribbon,
+.route-rail {
   fill: none;
   stroke-linecap: round;
 }
 
-.tunnel-shell.outer {
-  stroke: rgba(124, 199, 255, 0.22);
-  stroke-width: 1.8;
+.route-ribbon.halo {
+  stroke: url(#routeRibbon);
+  stroke-width: 24;
+  opacity: 0.12;
+  filter: url(#routeSoftGlow);
 }
 
-.tunnel-shell.inner {
-  stroke: rgba(116, 228, 174, 0.18);
+.route-ribbon.primary {
+  stroke: url(#routeRibbon);
+  stroke-width: 6.5;
+  filter: url(#routeSoftGlow);
+}
+
+.route-ribbon.secondary {
+  stroke: rgba(124, 199, 255, 0.56);
+  stroke-width: 3.5;
+}
+
+.route-rail {
+  stroke: rgba(124, 199, 255, 0.18);
   stroke-width: 1.4;
 }
 
-.tunnel-beam {
-  fill: none;
-  stroke: url(#tunnelBeam);
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 12px rgba(116, 228, 174, 0.42));
+.gateway-aura {
+  fill: url(#secureCoreGlow);
 }
 
-.tunnel-beam.upper {
-  stroke-width: 5.4;
+.gateway-shell {
+  fill: rgba(9, 21, 38, 0.58);
+  stroke: rgba(124, 199, 255, 0.34);
+  stroke-width: 1.6;
 }
 
-.tunnel-beam.lower {
-  stroke-width: 3.8;
-  opacity: 0.64;
+.gateway-panel {
+  fill: rgba(116, 228, 174, 0.08);
+  stroke: rgba(116, 228, 174, 0.28);
+  stroke-width: 1.4;
 }
 
-.tunnel-flow {
-  fill: none;
-  stroke: rgba(248, 251, 255, 0.78);
-  stroke-linecap: round;
-  stroke-dasharray: 10 24;
-  stroke-width: 2;
-  opacity: 0;
-}
-
-.route-map.connecting .tunnel-flow,
-.route-map.connected .tunnel-flow,
-.route-map.handoff .tunnel-flow {
-  animation: dashFlow 1.8s linear infinite;
-  opacity: 0.88;
-}
-
-.core-ring {
-  fill: rgba(7, 17, 31, 0.58);
-  stroke-width: 1.5;
-}
-
-.core-ring.outer {
-  stroke: rgba(124, 199, 255, 0.26);
-}
-
-.core-ring.inner {
-  stroke: rgba(116, 228, 174, 0.38);
-}
-
-.route-map.connecting .core-ring.inner,
-.route-map.connected .core-ring.inner,
-.route-map.handoff .core-ring.inner {
-  animation: corePulse 2.4s ease-in-out infinite;
-}
-
-.core-shield {
-  fill: rgba(116, 228, 174, 0.16);
-  stroke: rgba(116, 228, 174, 0.7);
+.gateway-shield {
+  fill: rgba(116, 228, 174, 0.13);
+  stroke: rgba(116, 228, 174, 0.72);
   stroke-linejoin: round;
-  stroke-width: 2;
+  stroke-width: 2.2;
 }
 
-.core-check {
+.gateway-check {
   fill: none;
   stroke: #f8fbff;
   stroke-linecap: round;
@@ -553,28 +555,65 @@ h2 span {
   opacity: 0;
 }
 
-.route-map.connected .core-check {
+.route-map.connected .gateway-check {
   opacity: 1;
 }
 
-.signal-dot {
+.route-map.connecting .gateway-shell,
+.route-map.connected .gateway-shell,
+.route-map.handoff .gateway-shell {
+  animation: corePulse 2.4s ease-in-out infinite;
+}
+
+.packet-stream {
   display: none;
+}
+
+.packet,
+.packet-dot {
   fill: #f8fbff;
   filter: drop-shadow(0 0 10px rgba(124, 199, 255, 0.8));
 }
 
-.dot-two {
+.packet-two,
+.packet-dot {
   fill: #74e4ae;
 }
 
-.route-map.connecting .signal-dot,
-.route-map.connected .signal-dot,
-.route-map.handoff .signal-dot {
+.route-map.connecting .packet-stream,
+.route-map.connected .packet-stream,
+.route-map.handoff .packet-stream {
   display: block;
+}
+
+.route-map.connecting .route-ribbon.primary,
+.route-map.handoff .route-ribbon.primary {
+  stroke-dasharray: 22 18;
+  animation: dashFlow 1.4s linear infinite;
+}
+
+.route-map.connected .route-ribbon.halo,
+.route-map.connected .route-ribbon.primary {
+  opacity: 1;
+}
+
+.route-map.connected .route-ribbon.halo {
+  opacity: 0.18;
+}
+
+.route-map.connected .gateway-panel {
+  fill: rgba(116, 228, 174, 0.15);
+  stroke: rgba(116, 228, 174, 0.46);
+}
+
+.route-map.idle .route-ribbon.primary,
+.route-map.idle .route-ribbon.secondary {
+  opacity: 0.62;
 }
 
 .node {
   position: absolute;
+  z-index: 1;
   display: grid;
   width: 54px;
   height: 54px;
@@ -1104,7 +1143,10 @@ h2 span {
   }
 
   .app-shell {
+    width: 100%;
+    max-width: 100vw;
     padding-bottom: 70px;
+    overflow-x: hidden;
   }
 
   .sidebar {
@@ -1140,6 +1182,8 @@ h2 span {
   }
 
   .workspace {
+    max-width: 100vw;
+    overflow-x: hidden;
     padding: 18px 14px;
   }
 
@@ -1151,15 +1195,29 @@ h2 span {
   }
 
   .topbar-actions {
+    display: flex;
     align-items: stretch;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    width: 100%;
   }
 
-  .install-button,
-  .status-pill {
+  .install-button {
+    flex: 1 1 auto;
     justify-content: center;
-    flex: 1 1 130px;
+    min-width: 0;
+  }
+
+  .status-pill {
+    flex: 0 0 auto;
+    justify-content: center;
+  }
+
+  .topbar,
+  .session-strip,
+  .connection-panel,
+  .relay-panel {
+    max-width: calc(100vw - 28px);
   }
 
   .install-hint {
@@ -1177,6 +1235,7 @@ h2 span {
   }
 
   .topbar-copy {
+    max-width: 100%;
     font-size: 0.94rem;
   }
 
@@ -1199,16 +1258,25 @@ h2 span {
     height: 220px;
   }
 
+  .route-canvas {
+    left: 50%;
+    width: 106%;
+    transform: translateX(-50%);
+  }
+
   .vpn-visual-status {
     bottom: 12px;
   }
 
   .node.home {
-    left: 10%;
+    left: 12%;
+    top: 51%;
   }
 
   .node.exit {
-    right: 10%;
+    right: auto;
+    left: 68%;
+    top: 38%;
   }
 
   .primary-button,

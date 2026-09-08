@@ -1213,42 +1213,65 @@ function App() {
             <div className={`route-map ${status}`} aria-label="Global route visualization">
               <svg className="route-canvas" viewBox="0 0 1000 260" aria-hidden="true">
                 <defs>
-                  <linearGradient id="tunnelBeam" x1="168" y1="132" x2="832" y2="132" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="routeRibbon" x1="170" y1="130" x2="830" y2="130" gradientUnits="userSpaceOnUse">
                     <stop stopColor="#74e4ae" />
-                    <stop offset="0.48" stopColor="#7cc7ff" />
+                    <stop offset="0.55" stopColor="#7cc7ff" />
                     <stop offset="1" stopColor="#f0c36a" />
                   </linearGradient>
-                  <linearGradient id="tunnelGlow" x1="168" y1="132" x2="832" y2="132" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#74e4ae" stopOpacity="0" />
-                    <stop offset="0.18" stopColor="#74e4ae" stopOpacity="0.22" />
-                    <stop offset="0.5" stopColor="#7cc7ff" stopOpacity="0.3" />
-                    <stop offset="0.82" stopColor="#f0c36a" stopOpacity="0.18" />
-                    <stop offset="1" stopColor="#f0c36a" stopOpacity="0" />
+                  <linearGradient id="routePanel" x1="92" y1="130" x2="908" y2="130" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#0b1425" stopOpacity="0.12" />
+                    <stop offset="0.5" stopColor="#203d56" stopOpacity="0.52" />
+                    <stop offset="1" stopColor="#12342f" stopOpacity="0.3" />
                   </linearGradient>
+                  <radialGradient id="secureCoreGlow" cx="0" cy="0" r="1" gradientTransform="translate(500 130) rotate(90) scale(92)">
+                    <stop stopColor="#7cc7ff" stopOpacity="0.42" />
+                    <stop offset="0.45" stopColor="#74e4ae" stopOpacity="0.18" />
+                    <stop offset="1" stopColor="#74e4ae" stopOpacity="0" />
+                  </radialGradient>
+                  <filter id="routeSoftGlow" x="-20%" y="-80%" width="140%" height="260%">
+                    <feGaussianBlur stdDeviation="7" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <path id="primaryRoutePath" d="M176 136C294 72 646 52 824 126" />
+                  <path id="returnRoutePath" d="M176 144C340 190 660 188 824 136" />
                 </defs>
-                <path className="perspective-line top" d="M156 74H844" />
-                <path className="perspective-line mid" d="M118 132H882" />
-                <path className="perspective-line bottom" d="M156 190H844" />
-                <path className="perspective-line diagonal-left" d="M168 132 386 58" />
-                <path className="perspective-line diagonal-right" d="M832 132 614 58" />
-                <path className="perspective-line diagonal-left lower" d="M168 132 386 202" />
-                <path className="perspective-line diagonal-right lower" d="M832 132 614 202" />
-                <path className="tunnel-glow" d="M178 132C320 80 680 80 822 132C680 184 320 184 178 132Z" />
-                <path className="tunnel-shell outer" d="M178 132C320 68 680 68 822 132C680 196 320 196 178 132Z" />
-                <path className="tunnel-shell inner" d="M234 132C358 92 642 92 766 132C642 172 358 172 234 132Z" />
-                <path className="tunnel-beam upper" d="M170 132C330 80 670 80 830 132" />
-                <path className="tunnel-beam lower" d="M170 132C330 184 670 184 830 132" />
-                <path className="tunnel-flow" d="M170 132C330 80 670 80 830 132" />
-                <circle className="core-ring outer" cx="500" cy="132" r="58" />
-                <circle className="core-ring inner" cx="500" cy="132" r="39" />
-                <path className="core-shield" d="M500 98l30 13v25c0 24-13 39-30 48-17-9-30-24-30-48v-25l30-13Z" />
-                <path className="core-check" d="m486 133 10 10 22-25" />
-                <circle className="signal-dot dot-one" r="6">
-                  <animateMotion dur="2.4s" repeatCount="indefinite" path="M170 132C330 80 670 80 830 132" />
-                </circle>
-                <circle className="signal-dot dot-two" r="4">
-                  <animateMotion dur="3.2s" repeatCount="indefinite" path="M170 132C330 184 670 184 830 132" />
-                </circle>
+                <path className="visual-plane back" d="M178 52H822L908 130L822 208H178L92 130Z" />
+                <path className="visual-plane front" d="M248 83H752L826 130L752 177H248L174 130Z" />
+                <path className="circuit-line top-left" d="M130 68H265L368 35" />
+                <path className="circuit-line top-right" d="M870 68H735L632 35" />
+                <path className="circuit-line bottom-left" d="M130 192H265L368 225" />
+                <path className="circuit-line bottom-right" d="M870 192H735L632 225" />
+                <path className="route-shadow" d="M176 136C294 72 646 52 824 126C668 166 338 174 176 136Z" />
+                <use className="route-ribbon halo" href="#primaryRoutePath" />
+                <use className="route-ribbon primary" href="#primaryRoutePath" />
+                <use className="route-ribbon secondary" href="#returnRoutePath" />
+                <path className="route-rail upper" d="M176 136C330 106 642 96 824 126" />
+                <path className="route-rail lower" d="M176 144C338 156 646 162 824 136" />
+                <circle className="gateway-aura" cx="500" cy="130" r="62" />
+                <path className="gateway-shell" d="M500 58 585 130 500 202 415 130Z" />
+                <path className="gateway-panel" d="M500 84 548 130 500 176 452 130Z" />
+                <path className="gateway-shield" d="M500 101l28 12v25c0 21-12 35-28 44-16-9-28-23-28-44v-25l28-12Z" />
+                <path className="gateway-check" d="m487 135 10 10 21-25" />
+                <g className="packet-stream">
+                  <rect className="packet packet-one" width="22" height="8" rx="4">
+                    <animateMotion dur="2.5s" repeatCount="indefinite">
+                      <mpath href="#primaryRoutePath" />
+                    </animateMotion>
+                  </rect>
+                  <rect className="packet packet-two" width="16" height="7" rx="3.5">
+                    <animateMotion dur="3.1s" repeatCount="indefinite" begin="-1s">
+                      <mpath href="#returnRoutePath" />
+                    </animateMotion>
+                  </rect>
+                  <circle className="packet-dot" r="5">
+                    <animateMotion dur="3.8s" repeatCount="indefinite" begin="-1.8s">
+                      <mpath href="#primaryRoutePath" />
+                    </animateMotion>
+                  </circle>
+                </g>
               </svg>
               <div className="node home">
                 <Wifi size={18} />
