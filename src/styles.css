@@ -258,6 +258,7 @@ h2 span {
   color: #91a3bc;
   font-size: 1rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .quick-stats {
@@ -1165,7 +1166,7 @@ h2 span {
 
   .nav-list {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
   }
 
@@ -1244,18 +1245,51 @@ h2 span {
     padding: 12px;
   }
 
+  .connection-panel {
+    padding: 12px;
+  }
+
+  .panel-heading {
+    gap: 12px;
+  }
+
+  .country-orbit {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    font-size: 0.88rem;
+  }
+
   .session-icon {
     width: 40px;
     height: 40px;
   }
 
-  .metrics,
   .relay-toolbar {
     grid-template-columns: 1fr;
   }
 
+  .metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .metric {
+    min-height: 76px;
+    padding: 10px 8px;
+  }
+
+  .metric span {
+    font-size: 0.72rem;
+  }
+
+  .metric strong {
+    font-size: 0.95rem;
+  }
+
   .route-map {
-    height: 220px;
+    height: 178px;
+    margin: 12px 0 10px;
   }
 
   .route-canvas {
@@ -1265,7 +1299,18 @@ h2 span {
   }
 
   .vpn-visual-status {
-    bottom: 12px;
+    bottom: 10px;
+    min-height: 30px;
+    font-size: 0.86rem;
+  }
+
+  .node {
+    width: 46px;
+    height: 46px;
+  }
+
+  .node::before {
+    inset: -13px;
   }
 
   .node.home {
@@ -1283,6 +1328,17 @@ h2 span {
   .danger-button,
   .secondary-button {
     width: 100%;
+    min-height: 48px;
+  }
+
+  .connect-actions span {
+    width: 100%;
+    text-align: center;
+  }
+
+  .relay-note,
+  .success-note {
+    font-size: 0.82rem;
   }
 
   .relay-header {

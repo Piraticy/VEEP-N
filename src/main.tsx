@@ -553,12 +553,20 @@ const countries: CountryNode[] = countryCodes
 
 const regionsList = ["All", ...Array.from(new Set(countries.map((country) => country.region))).sort()];
 
+function isMobileBrowser() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function isIosBrowser() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function getDeviceType(): SharedConnectionState["deviceType"] {
   if (window.veepnDesktop) {
     return "desktop";
   }
 
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ? "mobile" : "web";
+  return isMobileBrowser() ? "mobile" : "web";
 }
 
 function getDeviceName(deviceType: SharedConnectionState["deviceType"]) {
@@ -567,7 +575,7 @@ function getDeviceName(deviceType: SharedConnectionState["deviceType"]) {
   }
 
   if (deviceType === "mobile") {
-    return /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "iOS mobile" : "Android mobile";
+    return isIosBrowser() ? "iOS mobile" : "Android mobile";
   }
 
   return "Web dashboard";
@@ -598,10 +606,7 @@ function getStatusLabel(status: ConnectionStatus) {
 }
 
 function getManualInstallMessage(deviceType: SharedConnectionState["deviceType"]) {
-  const userAgent = navigator.userAgent;
-  const isIos = /iPhone|iPad|iPod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-  if (isIos) {
+  if (isIosBrowser()) {
     return "On iPhone or iPad, open Safari, then Share > Add to Home Screen.";
   }
 
@@ -616,6 +621,7 @@ function App() {
   const isDesktop = Boolean(window.veepnDesktop);
   const deviceType = React.useMemo(() => getDeviceType(), []);
   const deviceName = React.useMemo(() => getDeviceName(deviceType), [deviceType]);
+  const isMobileClient = deviceType === "mobile";
   const [query, setQuery] = React.useState("");
   const [region, setRegion] = React.useState("All");
   const [protocol, setProtocol] = React.useState<Protocol>("WireGuard");
@@ -816,8 +822,8 @@ function App() {
   }, []);
 
   const canNativeConnect = Boolean(isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
-  const canRuntimeConnect = Boolean(!isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
-  const canSystemConnect = Boolean(!isDesktop && !canRuntimeConnect && selectedRelay);
+  const canRuntimeConnect = Boolean(!isDesktop && !isMobileClient && runtimeStatus?.openVpnInstalled && selectedRelay);
+  const canSystemConnect = Boolean(!isDesktop && !isMobileClient && !canRuntimeConnect && selectedRelay);
   const relayCountries = new Set(relays.map((relay) => relay.countryShort)).size;
   const runtimeConnection = runtimeStatus?.activeConnection;
   const sharedConnection = sharedState && sharedState.status !== "idle" ? sharedState : null;
@@ -850,7 +856,9 @@ function App() {
       ? "Desktop tunnel ready"
       : canRuntimeConnect
         ? "App tunnel ready"
-        : "Open desktop app"
+        : isMobileClient
+          ? "Mobile profile"
+          : "Open desktop app"
     : "Bridge demo";
   const primaryActionLabel =
     status === "connecting"
@@ -860,7 +868,9 @@ function App() {
         : selectedRelay
           ? canNativeConnect || canRuntimeConnect
             ? "Connect VPN"
-            : "Connect system"
+            : isMobileClient
+              ? "Download profile"
+              : "Connect system"
           : "Demo connect";
 
   React.useEffect(() => {
@@ -939,7 +949,11 @@ function App() {
     setConnectionMessage("");
     await publishSharedState({
       status: "connecting",
-      message: selectedRelay ? `Preparing ${selectedRelay.hostname}` : `Preparing ${activeCountryName}`,
+      message: selectedRelay
+        ? isMobileClient
+          ? `Preparing mobile profile for ${selectedRelay.hostname}`
+          : `Preparing ${selectedRelay.hostname}`
+        : `Preparing ${activeCountryName}`,
       mode: canNativeConnect || canSystemConnect ? "native" : canRuntimeConnect ? "container" : selectedRelay ? "profile" : "demo"
     });
 
@@ -1020,12 +1034,26 @@ function App() {
       });
       return;
     } else if (selectedRelay) {
-      await exportRelayConfig();
+      const exported = await exportRelayConfig();
+      if (!exported) {
+        setStatus("idle");
+        await publishSharedState({
+          status: "idle",
+          mode: "profile",
+          message: "Could not prepare the VPN profile."
+        });
+        return;
+      }
+
       setStatus("profile-ready");
+      const message = isMobileClient
+        ? "Profile downloaded. Open the .ovpn file in OpenVPN Connect to start the VPN."
+        : `${selectedRelay.hostname} profile is ready on ${deviceName}.`;
+      setConnectionMessage(message);
       await publishSharedState({
         status: "profile-ready",
         mode: "profile",
-        message: `${selectedRelay.hostname} profile is ready on ${deviceName}.`
+        message
       });
       return;
     } else {
@@ -1080,7 +1108,7 @@ function App() {
 
   async function exportRelayConfig() {
     if (!selectedRelay) {
-      return;
+      return false;
     }
 
     setRelayExportPath("Preparing config...");
@@ -1089,7 +1117,7 @@ function App() {
       if (window.veepnDesktop) {
         const result = await window.veepnDesktop.exportRelayConfig(selectedRelay.hostname);
         setRelayExportPath(result.filePath);
-        return;
+        return true;
       }
 
       const response = await fetch(`/api/relays/${encodeURIComponent(selectedRelay.hostname)}/config`);
@@ -1103,11 +1131,18 @@ function App() {
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download = `veep-n-${selectedRelay.countryShort.toLowerCase()}-${selectedRelay.hostname}.ovpn`;
+      anchor.style.display = "none";
+      document.body.append(anchor);
       anchor.click();
-      URL.revokeObjectURL(url);
-      setRelayExportPath("Downloaded OpenVPN config");
+      window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+        anchor.remove();
+      }, 1000);
+      setRelayExportPath(isMobileClient ? "Downloaded .ovpn profile" : "Downloaded OpenVPN config");
+      return true;
     } catch (error) {
       setRelayExportPath(error instanceof Error ? error.message : "Config export failed.");
+      return false;
     }
   }
 
@@ -1153,7 +1188,7 @@ function App() {
               <button
                 className={`install-button ${installState}`}
                 onClick={installWebApp}
-                title="Install VEEP-N as a desktop web app"
+                title="Install VEEP-N on this device"
               >
                 <Download size={15} />
                 {installState === "installed" ? "Installed" : "Install app"}

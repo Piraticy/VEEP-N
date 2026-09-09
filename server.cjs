@@ -92,7 +92,7 @@ function readJsonBody(request) {
 }
 
 function updateConnectionState(input) {
-  const allowedStatuses = new Set(["idle", "connecting", "connected", "profile-ready", "disconnecting"]);
+  const allowedStatuses = new Set(["idle", "connecting", "connected", "profile-ready", "handoff", "disconnecting"]);
   const allowedDeviceTypes = new Set(["web", "desktop", "mobile"]);
   const allowedModes = new Set(["demo", "profile", "native", "container"]);
   const status = allowedStatuses.has(input.status) ? input.status : connectionState.status;
@@ -142,6 +142,7 @@ function appendVpnLog(line) {
       status: "connected",
       mode: "container",
       connectedAt: new Date().toISOString(),
+      deviceType: connectionState.deviceType,
       message: "VPN tunnel is connected in the app runtime."
     });
   }
@@ -303,14 +304,26 @@ async function handleApi(request, response, url) {
 
   if (url.pathname === "/api/runtime") {
     const openVpnPath = await findOpenVpnBinary();
+    const vpnRunning = Boolean(vpnProcess && !vpnProcess.killed);
     sendJson(response, 200, {
       platform: "web",
       desktop: false,
       openVpnInstalled: Boolean(openVpnPath),
       openVpnPath,
       relaySource: getRelaySourceStatus(),
-      vpnRunning: Boolean(vpnProcess && !vpnProcess.killed),
-      vpnLog: vpnLog.slice(-12)
+      vpnRunning,
+      vpnLog: vpnLog.slice(-12),
+      activeConnection:
+        vpnRunning && connectionState.relayHost
+          ? {
+              countryCode: connectionState.countryCode,
+              countryName: connectionState.countryName,
+              protocol: connectionState.protocol,
+              relayHost: connectionState.relayHost,
+              relayIp: connectionState.relayIp,
+              connectedAt: connectionState.connectedAt ?? connectionState.updatedAt
+            }
+          : null
     });
     return true;
   }
