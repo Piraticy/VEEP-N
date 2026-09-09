@@ -77,6 +77,7 @@ type RuntimeStatus = {
   openVpnPath: string;
   relaySource: RelaySourceStatus;
   vpnRunning: boolean;
+  vpnConnecting?: boolean;
   vpnLog: string[];
   activeConnection?: {
     countryCode: string;

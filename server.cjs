@@ -304,7 +304,8 @@ async function handleApi(request, response, url) {
 
   if (url.pathname === "/api/runtime") {
     const openVpnPath = await findOpenVpnBinary();
-    const vpnRunning = Boolean(vpnProcess && !vpnProcess.killed);
+    const vpnProcessRunning = Boolean(vpnProcess && !vpnProcess.killed);
+    const vpnRunning = vpnProcessRunning && connectionState.status === "connected";
     sendJson(response, 200, {
       platform: "web",
       desktop: false,
@@ -312,9 +313,10 @@ async function handleApi(request, response, url) {
       openVpnPath,
       relaySource: getRelaySourceStatus(),
       vpnRunning,
+      vpnConnecting: vpnProcessRunning && connectionState.status === "connecting",
       vpnLog: vpnLog.slice(-12),
       activeConnection:
-        vpnRunning && connectionState.relayHost
+        vpnRunning
           ? {
               countryCode: connectionState.countryCode,
               countryName: connectionState.countryName,
@@ -351,7 +353,7 @@ async function handleApi(request, response, url) {
 
   if (url.pathname === "/api/relays") {
     try {
-      sendJson(response, 200, await fetchVpnGateRelays({ limit: 80 }));
+      sendJson(response, 200, await fetchVpnGateRelays({ limit: 36 }));
     } catch (error) {
       sendJson(response, 502, {
         error: error instanceof Error ? error.message : "Relay discovery failed."

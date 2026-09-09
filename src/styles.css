@@ -793,6 +793,14 @@ h2 span {
   background: rgba(220, 231, 247, 0.08);
 }
 
+.refresh-button span {
+  display: inline;
+}
+
+.refresh-button:disabled svg {
+  animation: spin 0.9s linear infinite;
+}
+
 .secondary-button:hover:not(:disabled) {
   border-color: rgba(124, 199, 255, 0.45);
   background: rgba(124, 199, 255, 0.14);
@@ -1200,6 +1208,7 @@ h2 span {
     align-items: stretch;
     flex-direction: row;
     flex-wrap: nowrap;
+    justify-content: flex-end;
     width: 100%;
   }
 
@@ -1329,6 +1338,30 @@ h2 span {
   .secondary-button {
     width: 100%;
     min-height: 48px;
+  }
+
+  .relay-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    align-items: stretch;
+  }
+
+  .relay-actions .refresh-button {
+    width: 52px;
+    min-width: 52px;
+    padding: 0;
+  }
+
+  .relay-actions .refresh-button span {
+    display: none;
+  }
+
+  .relay-actions .refresh-button svg {
+    margin: 0;
+  }
+
+  .mini-segmented {
+    min-width: 0;
   }
 
   .connect-actions span {

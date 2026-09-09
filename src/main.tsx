@@ -552,9 +552,58 @@ const countries: CountryNode[] = countryCodes
   .sort((a, b) => a.name.localeCompare(b.name));
 
 const regionsList = ["All", ...Array.from(new Set(countries.map((country) => country.region))).sort()];
+const RELAY_CACHE_KEY = "veep-n-relays";
+const RELAY_FETCH_TIMEOUT_MS = 10000;
+
+function readCachedRelays() {
+  try {
+    const cached = localStorage.getItem(RELAY_CACHE_KEY);
+    if (!cached) {
+      return [];
+    }
+
+    const parsed = JSON.parse(cached) as PublicRelay[];
+    return Array.isArray(parsed) ? parsed.filter((relay) => relay?.hostname && relay?.countryShort).slice(0, 80) : [];
+  } catch {
+    return [];
+  }
+}
+
+function cacheRelays(nextRelays: PublicRelay[]) {
+  try {
+    localStorage.setItem(RELAY_CACHE_KEY, JSON.stringify(nextRelays.slice(0, 80)));
+  } catch {
+    // Cache is only an offline speed-up.
+  }
+}
+
+async function fetchJsonWithTimeout<T>(url: string, timeoutMs = RELAY_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      throw new Error(body.error ?? "Request failed.");
+    }
+
+    return (await response.json()) as T;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
 
 function isMobileBrowser() {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function isInstalledWebApp() {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+  );
 }
 
 function isIosBrowser() {
@@ -629,10 +678,11 @@ function App() {
     countries.find((country) => country.code === "US") ?? countries[0]
   );
   const [status, setStatus] = React.useState<ConnectionStatus>("idle");
-  const [relays, setRelays] = React.useState<PublicRelay[]>([]);
+  const [relays, setRelays] = React.useState<PublicRelay[]>(() => readCachedRelays());
   const [relaysLoading, setRelaysLoading] = React.useState(false);
   const [relayError, setRelayError] = React.useState("");
   const [selectedRelay, setSelectedRelay] = React.useState<PublicRelay | null>(null);
+  const selectedRelayRef = React.useRef<PublicRelay | null>(null);
   const [relayExportPath, setRelayExportPath] = React.useState("");
   const [runtimeStatus, setRuntimeStatus] = React.useState<RuntimeStatus | null>(null);
   const [connectionMessage, setConnectionMessage] = React.useState("");
@@ -640,7 +690,7 @@ function App() {
   const [sharedState, setSharedState] = React.useState<SharedConnectionState | null>(null);
   const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [installState, setInstallState] = React.useState<"available" | "installed" | "unsupported">(
-    window.matchMedia("(display-mode: standalone)").matches ? "installed" : "unsupported"
+    isInstalledWebApp() ? "installed" : "unsupported"
   );
   const [installMessage, setInstallMessage] = React.useState("");
 
@@ -731,6 +781,10 @@ function App() {
     [deviceName, deviceType, protocol, selected, selectedRelay]
   );
 
+  React.useEffect(() => {
+    selectedRelayRef.current = selectedRelay;
+  }, [selectedRelay]);
+
   const loadRelays = React.useCallback(async () => {
     setRelaysLoading(true);
     setRelayError("");
@@ -738,18 +792,36 @@ function App() {
     try {
       const nextRelays = window.veepnDesktop
         ? await window.veepnDesktop.listRelays()
-        : await fetch("/api/relays").then(async (response) => {
-            if (!response.ok) {
-              const body = (await response.json().catch(() => ({}))) as { error?: string };
-              throw new Error(body.error ?? "Relay discovery failed.");
-            }
-            return (await response.json()) as PublicRelay[];
-          });
+        : await fetchJsonWithTimeout<PublicRelay[]>("/api/relays");
 
       setRelays(nextRelays);
+      cacheRelays(nextRelays);
+
+      if (nextRelays.length > 0 && !selectedRelayRef.current) {
+        setSelectedRelay(nextRelays[0]);
+        const matchingCountry = countries.find((country) => country.code === nextRelays[0].countryShort);
+        if (matchingCountry) {
+          setSelected(matchingCountry);
+        }
+      }
+
       await loadRuntimeStatus();
     } catch (error) {
-      setRelayError(error instanceof Error ? error.message : "Could not load public relays.");
+      const cachedRelays = readCachedRelays();
+
+      if (cachedRelays.length > 0) {
+        setRelays(cachedRelays);
+        setRelayError("Live relay refresh is slow. Showing saved relays.");
+      } else {
+        setRelayError(
+          error instanceof DOMException && error.name === "AbortError"
+            ? "Relay refresh timed out. Check your network and tap Refresh again."
+            : error instanceof Error
+              ? error.message
+              : "Could not load public relays."
+        );
+      }
+
       await loadRuntimeStatus();
     } finally {
       setRelaysLoading(false);
@@ -761,6 +833,19 @@ function App() {
     void loadRelays();
     void loadSharedState();
   }, [loadRelays, loadRuntimeStatus, loadSharedState]);
+
+  React.useEffect(() => {
+    if (selectedRelay || relays.length === 0) {
+      return;
+    }
+
+    const relay = relays[0];
+    setSelectedRelay(relay);
+    const matchingCountry = countries.find((country) => country.code === relay.countryShort);
+    if (matchingCountry) {
+      setSelected(matchingCountry);
+    }
+  }, [relays, selectedRelay]);
 
   React.useEffect(() => {
     if (window.veepnDesktop) {
@@ -800,6 +885,13 @@ function App() {
 
   React.useEffect(() => {
     const handleInstallPrompt = (event: Event) => {
+      if (isInstalledWebApp()) {
+        setInstallPrompt(null);
+        setInstallState("installed");
+        setInstallMessage("");
+        return;
+      }
+
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
       setInstallState("available");
@@ -809,7 +901,7 @@ function App() {
     const handleInstalled = () => {
       setInstallPrompt(null);
       setInstallState("installed");
-      setInstallMessage("Installed on this device.");
+      setInstallMessage("");
     };
 
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
@@ -824,6 +916,7 @@ function App() {
   const canNativeConnect = Boolean(isDesktop && runtimeStatus?.openVpnInstalled && selectedRelay);
   const canRuntimeConnect = Boolean(!isDesktop && !isMobileClient && runtimeStatus?.openVpnInstalled && selectedRelay);
   const canSystemConnect = Boolean(!isDesktop && !isMobileClient && !canRuntimeConnect && selectedRelay);
+  const showInstallButton = !isDesktop && installState !== "installed" && !isInstalledWebApp();
   const relayCountries = new Set(relays.map((relay) => relay.countryShort)).size;
   const runtimeConnection = runtimeStatus?.activeConnection;
   const sharedConnection = sharedState && sharedState.status !== "idle" ? sharedState : null;
@@ -865,13 +958,21 @@ function App() {
       ? "Connecting..."
       : status === "disconnecting"
         ? "Disconnecting..."
-        : selectedRelay
+        : status === "profile-ready" && isMobileClient
+          ? "Download again"
+          : selectedRelay
           ? canNativeConnect || canRuntimeConnect
             ? "Connect VPN"
             : isMobileClient
-              ? "Download profile"
+              ? "Connect with profile"
               : "Connect system"
-          : "Demo connect";
+          : "Choose relay";
+  const showStopAction =
+    status === "connected" ||
+    status === "handoff" ||
+    status === "connecting" ||
+    status === "disconnecting" ||
+    (status === "profile-ready" && !isMobileClient);
 
   React.useEffect(() => {
     if (!runtimeStatus) {
@@ -889,6 +990,11 @@ function App() {
           message: `${activeCountryName} tunnel is running.`
         });
       }
+      return;
+    }
+
+    if (runtimeStatus.vpnConnecting) {
+      setStatus("connecting");
       return;
     }
 
@@ -920,8 +1026,9 @@ function App() {
   }
 
   async function installWebApp() {
-    if (installState === "installed") {
-      setInstallMessage("VEEP-N is already installed.");
+    if (installState === "installed" || isInstalledWebApp()) {
+      setInstallMessage("");
+      setInstallState("installed");
       return;
     }
 
@@ -945,6 +1052,12 @@ function App() {
   }
 
   async function connect() {
+    if (!selectedRelay) {
+      setConnectionMessage("Choose a relay first.");
+      document.getElementById("relays")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
     setStatus("connecting");
     setConnectionMessage("");
     await publishSharedState({
@@ -1184,14 +1297,14 @@ function App() {
             </div>
           </div>
           <div className="topbar-actions">
-            {!isDesktop && (
+            {showInstallButton && (
               <button
                 className={`install-button ${installState}`}
                 onClick={installWebApp}
                 title="Install VEEP-N on this device"
               >
                 <Download size={15} />
-                {installState === "installed" ? "Installed" : "Install app"}
+                Install app
               </button>
             )}
             <div className={`status-pill ${status}`}>
@@ -1204,7 +1317,7 @@ function App() {
             </div>
           </div>
         </header>
-        {installMessage && !isDesktop && <div className="install-hint">{installMessage}</div>}
+        {installMessage && showInstallButton && <div className="install-hint">{installMessage}</div>}
 
         <section className={`session-strip ${status}`} aria-live="polite">
           <div className="session-icon">
@@ -1347,11 +1460,7 @@ function App() {
             </div>
 
             <div className="connect-actions">
-              {status === "connected" ||
-              status === "profile-ready" ||
-              status === "handoff" ||
-              status === "connecting" ||
-              status === "disconnecting" ? (
+              {showStopAction ? (
                 <button className="danger-button" onClick={disconnect} disabled={status === "disconnecting"}>
                   <X size={18} /> {status === "profile-ready" || status === "handoff" ? "Clear" : "Disconnect"}
                 </button>
@@ -1411,8 +1520,14 @@ function App() {
                   Ping
                 </button>
               </div>
-              <button className="secondary-button" onClick={loadRelays} disabled={relaysLoading}>
-                <RefreshCw size={18} /> {relaysLoading ? "Refreshing..." : "Refresh"}
+              <button
+                className="secondary-button refresh-button"
+                onClick={loadRelays}
+                disabled={relaysLoading}
+                aria-label={relaysLoading ? "Refreshing relays" : "Refresh relays"}
+              >
+                <RefreshCw size={18} />
+                <span>{relaysLoading ? "Refreshing..." : "Refresh"}</span>
               </button>
             </div>
           </div>
